@@ -1,0 +1,44 @@
+import csv
+import sys
+import random
+
+N = 1000 
+
+def simulate_game(team1, team2)://Simula um jogo entre dois times e retorna o vencedo
+    rating1, rating2 = team1["rating"], team2["rating"]
+    probability = 1 / (1 + 10 ** ((rating2 - rating1) / 600))
+    return team1 if random.random() < probability else team2
+
+def simulate_round(teams)://Simula uma rodada e retorna a lista de vencedores
+    winners = []
+    for i in range(0, len(teams), 2):
+        winners.append(simulate_game(teams[i], teams[i + 1]))
+    return winners
+
+def simulate_tournament(teams)://Simula o torneio até restar um único vencedor
+    while len(teams) > 1:
+        teams = simulate_round(teams)
+    return teams[0]["team"]
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python tournament.py FILENAME")
+
+    filename = sys.argv[1]
+    teams = []
+
+    with open(filename) as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            teams.append({"team": row["team"], "rating": int(row["rating"])})
+
+    counts = {}
+    for _ in range(N):
+        winner = simulate_tournament(teams)
+        counts[winner] = counts.get(winner, 0) + 1
+
+    for team, wins in sorted(counts.items(), key=lambda item: item[1], reverse=True):
+        print(f"{team}: {wins / N * 100:.1f}% chance of winning")
+
+if __name__ == "__main__":
+    main()
